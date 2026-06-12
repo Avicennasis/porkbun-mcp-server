@@ -19,10 +19,11 @@ registrar-level mutations (glue records, URL forwarding, labels) emit
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -68,7 +69,7 @@ def _emit(
 
     if handler == "jsonl":
         row = {
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "source": SOURCE,
             "category": category,
             "action": action,
@@ -98,10 +99,8 @@ def _emit(
         cmd.extend(["--target", target])
     if payload:
         cmd.extend(["--payload", json.dumps(payload, default=str)])
-    try:
+    with contextlib.suppress(OSError, subprocess.SubprocessError):
         subprocess.run(cmd, capture_output=True, timeout=5)
-    except (OSError, subprocess.SubprocessError):
-        pass
 
 
 def emit_dns_change(
