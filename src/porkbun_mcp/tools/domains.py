@@ -118,9 +118,7 @@ def transfer_domain_impl(
     return out
 
 
-def get_transfer_status_impl(
-    client: PorkbunClient, domain: str
-) -> dict[str, Any]:
+def get_transfer_status_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
     return client.post(f"/domain/getTransfer/{domain}")
 
 

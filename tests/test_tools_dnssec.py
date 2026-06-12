@@ -14,22 +14,24 @@ from porkbun_mcp.tools import dnssec
 
 def test_get_dnssec_records(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "records": {
-                    "12345": {
-                        "keyTag": "12345",
-                        "alg": "13",
-                        "digestType": "2",
-                        "digest": "abc...",
-                    }
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "records": {
+                        "12345": {
+                            "keyTag": "12345",
+                            "alg": "13",
+                            "digestType": "2",
+                            "digest": "abc...",
+                        }
+                    },
                 },
-            },
+            )
+            if "/dns/getDnssecRecords/" in r.url.path
+            else None
         )
-        if "/dns/getDnssecRecords/" in r.url.path
-        else None
     )
     out = dnssec.get_dnssec_records_impl(fake_client, "example.com")
     assert "12345" in out["records"]
@@ -62,8 +64,12 @@ def test_create_dnssec_record_required_fields_only(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     dnssec.create_dnssec_record_impl(
-        fake_client, "example.com",
-        key_tag="12345", alg="13", digest_type="2", digest="abcdef",
+        fake_client,
+        "example.com",
+        key_tag="12345",
+        alg="13",
+        digest_type="2",
+        digest="abcdef",
         reason="Enabling DNSSEC for zone",
     )
 
@@ -94,11 +100,17 @@ def test_create_dnssec_record_with_keydata(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     dnssec.create_dnssec_record_impl(
-        fake_client, "example.com",
-        key_tag="12345", alg="13", digest_type="2", digest="abc",
+        fake_client,
+        "example.com",
+        key_tag="12345",
+        alg="13",
+        digest_type="2",
+        digest="abc",
         max_sig_life="3600",
-        key_data_flags="257", key_data_protocol="3",
-        key_data_algorithm="13", key_data_pub_key="<base64>",
+        key_data_flags="257",
+        key_data_protocol="3",
+        key_data_algorithm="13",
+        key_data_pub_key="<base64>",
         reason="DNSKEY-derived DS",
     )
 
@@ -124,7 +136,8 @@ def test_delete_dnssec_record_path_includes_key_tag(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     dnssec.delete_dnssec_record_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         key_tag="12345",
         reason="Rotating KSK",
     )
@@ -139,13 +152,20 @@ def test_dnssec_audit_disabled_skips_emit(
     fake_client: PorkbunClient, subprocess_spy: list[list[str]]
 ) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(200, json={"status": "SUCCESS"})
-        if "/dns/createDnssecRecord/example.com" in r.url.path else None
+        lambda r: (
+            httpx.Response(200, json={"status": "SUCCESS"})
+            if "/dns/createDnssecRecord/example.com" in r.url.path
+            else None
+        )
     )
 
     dnssec.create_dnssec_record_impl(
-        fake_client, "example.com",
-        key_tag="1", alg="13", digest_type="2", digest="x",
+        fake_client,
+        "example.com",
+        key_tag="1",
+        alg="13",
+        digest_type="2",
+        digest="x",
         reason="r",
         audit_enabled=False,
     )
@@ -156,16 +176,24 @@ def test_dnssec_api_error_skips_audit(
     fake_client: PorkbunClient, subprocess_spy: list[list[str]]
 ) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            400, json={"status": "ERROR", "message": "Bad alg"},
+        lambda r: (
+            httpx.Response(
+                400,
+                json={"status": "ERROR", "message": "Bad alg"},
+            )
+            if "/dns/createDnssecRecord/example.com" in r.url.path
+            else None
         )
-        if "/dns/createDnssecRecord/example.com" in r.url.path else None
     )
 
     with pytest.raises(PorkbunAPIError):
         dnssec.create_dnssec_record_impl(
-            fake_client, "example.com",
-            key_tag="1", alg="999", digest_type="2", digest="x",
+            fake_client,
+            "example.com",
+            key_tag="1",
+            alg="999",
+            digest_type="2",
+            digest="x",
             reason="r",
         )
     assert subprocess_spy == []

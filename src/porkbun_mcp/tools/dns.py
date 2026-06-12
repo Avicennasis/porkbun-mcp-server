@@ -14,9 +14,7 @@ def list_dns_records_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
     return client.post(f"/dns/retrieve/{domain}")
 
 
-def get_dns_record_impl(
-    client: PorkbunClient, domain: str, record_id: str
-) -> dict[str, Any]:
+def get_dns_record_impl(client: PorkbunClient, domain: str, record_id: str) -> dict[str, Any]:
     return client.post(f"/dns/retrieve/{domain}/{record_id}")
 
 
@@ -79,7 +77,12 @@ def create_dns_record_impl(
     On success Porkbun returns ``{"status": "SUCCESS", "id": <int>}``.
     """
     body = _build_record_body(
-        type=type, name=name, content=content, ttl=ttl, prio=prio, notes=notes,
+        type=type,
+        name=name,
+        content=content,
+        ttl=ttl,
+        prio=prio,
+        notes=notes,
     )
     out = client.post(f"/dns/create/{domain}", body=body)
     _audit.emit_dns_change(
@@ -113,7 +116,12 @@ def edit_dns_record_impl(
     replace — caller must pass every field. Body shape matches create.
     """
     body = _build_record_body(
-        type=type, name=name, content=content, ttl=ttl, prio=prio, notes=notes,
+        type=type,
+        name=name,
+        content=content,
+        ttl=ttl,
+        prio=prio,
+        notes=notes,
     )
     out = client.post(f"/dns/edit/{domain}/{record_id}", body=body)
     _audit.emit_dns_change(
@@ -147,7 +155,12 @@ def edit_dns_records_by_name_type_impl(
     ``subdomain="" → apex. Body must NOT include ``type`` / ``name``
     (already encoded in the URL path)."""
     body = _build_record_body(
-        type=None, name=None, content=content, ttl=ttl, prio=prio, notes=notes,
+        type=None,
+        name=None,
+        content=content,
+        ttl=ttl,
+        prio=prio,
+        notes=notes,
     )
     path = f"/dns/editByNameType/{domain}/{type}"
     if subdomain:

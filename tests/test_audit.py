@@ -219,7 +219,7 @@ def test_emit_domain_change_with_target(monkeypatch: pytest.MonkeyPatch) -> None
         action="POST",
         domain="example.com",
         reason="add label",
-        target='LABEL `production`',
+        target="LABEL `production`",
         color="#00ff00",
     )
 
@@ -311,9 +311,15 @@ def test_emit_dns_change_action_verbs(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = _capture_subprocess(monkeypatch)
 
     for action in (
-        "POST", "PATCH", "DELETE",
-        "POST_BULK", "PATCH_BY_NAME_TYPE", "DELETE_BY_NAME_TYPE",
-        "POST_FAIL", "PATCH_FAIL", "DELETE_FAIL",
+        "POST",
+        "PATCH",
+        "DELETE",
+        "POST_BULK",
+        "PATCH_BY_NAME_TYPE",
+        "DELETE_BY_NAME_TYPE",
+        "POST_FAIL",
+        "PATCH_FAIL",
+        "DELETE_FAIL",
     ):
         audit.emit_dns_change(
             action=action,
@@ -325,7 +331,13 @@ def test_emit_dns_change_action_verbs(monkeypatch: pytest.MonkeyPatch) -> None:
 
     seen = {cmd[cmd.index("--action") + 1] for cmd in captured}
     assert seen == {
-        "POST", "PATCH", "DELETE",
-        "POST_BULK", "PATCH_BY_NAME_TYPE", "DELETE_BY_NAME_TYPE",
-        "POST_FAIL", "PATCH_FAIL", "DELETE_FAIL",
+        "POST",
+        "PATCH",
+        "DELETE",
+        "POST_BULK",
+        "PATCH_BY_NAME_TYPE",
+        "DELETE_BY_NAME_TYPE",
+        "POST_FAIL",
+        "PATCH_FAIL",
+        "DELETE_FAIL",
     }

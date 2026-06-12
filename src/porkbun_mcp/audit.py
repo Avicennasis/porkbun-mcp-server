@@ -89,11 +89,16 @@ def _emit(
     # External binary handler (absolute path)
     cmd = [
         handler,
-        "--source", SOURCE,
-        "--category", category,
-        "--action", action,
-        "--service", service,
-        "--reason", reason,
+        "--source",
+        SOURCE,
+        "--category",
+        category,
+        "--action",
+        action,
+        "--service",
+        service,
+        "--reason",
+        reason,
     ]
     if target:
         cmd.extend(["--target", target])

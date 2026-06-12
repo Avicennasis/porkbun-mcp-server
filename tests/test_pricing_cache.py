@@ -27,9 +27,7 @@ PRICING_PAYLOAD = {
 }
 
 
-def install_pricing_handler(
-    client: PorkbunClient, payload: dict | None = None
-) -> list[str]:
+def install_pricing_handler(client: PorkbunClient, payload: dict | None = None) -> list[str]:
     """Append a counting /pricing/get matcher; returns the call log."""
     calls: list[str] = []
 
@@ -122,16 +120,12 @@ def test_ttl_default_is_24h() -> None:
 
 
 def test_ttl_env_var_overrides() -> None:
-    assert pricing_cache.cache_ttl_seconds(
-        env={"PORKBUN_PRICING_CACHE_TTL": "3600"}
-    ) == 3600.0
+    assert pricing_cache.cache_ttl_seconds(env={"PORKBUN_PRICING_CACHE_TTL": "3600"}) == 3600.0
 
 
 @pytest.mark.parametrize("raw", ["banana", "-5", ""])
 def test_ttl_bad_values_fall_back_to_default(raw: str) -> None:
-    assert pricing_cache.cache_ttl_seconds(
-        env={"PORKBUN_PRICING_CACHE_TTL": raw}
-    ) == 86400.0
+    assert pricing_cache.cache_ttl_seconds(env={"PORKBUN_PRICING_CACHE_TTL": raw}) == 86400.0
 
 
 def test_ttl_zero_disables_cache_reads(
@@ -144,9 +138,7 @@ def test_ttl_zero_disables_cache_reads(
     assert len(calls) == 2
 
 
-def test_short_ttl_expires(
-    fake_client: PorkbunClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_short_ttl_expires(fake_client: PorkbunClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PORKBUN_PRICING_CACHE_TTL", "100")
     calls = install_pricing_handler(fake_client)
     account.get_pricing_impl(fake_client)
@@ -195,11 +187,11 @@ def test_corrupt_cache_file_refetches(fake_client: PorkbunClient) -> None:
 @pytest.mark.parametrize(
     "bad",
     [
-        [1, 2, 3],                                       # not a dict
-        {"payload": PRICING_PAYLOAD},                    # missing fetched_at
+        [1, 2, 3],  # not a dict
+        {"payload": PRICING_PAYLOAD},  # missing fetched_at
         {"fetched_at": "yesterday", "payload": PRICING_PAYLOAD},  # non-numeric
-        {"fetched_at": True, "payload": PRICING_PAYLOAD},         # bool sneaks past int
-        {"fetched_at": 1.0, "payload": "nope"},          # payload not a dict
+        {"fetched_at": True, "payload": PRICING_PAYLOAD},  # bool sneaks past int
+        {"fetched_at": 1.0, "payload": "nope"},  # payload not a dict
     ],
 )
 def test_bad_cache_shapes_refetch(fake_client: PorkbunClient, bad: object) -> None:

@@ -41,9 +41,7 @@ def test_get_marketplace_filtered(fake_client: PorkbunClient) -> None:
     def handler(r: httpx.Request) -> httpx.Response | None:
         if r.url.path.endswith("/marketplace/getAll"):
             captured.append(json.loads(r.content))
-            return httpx.Response(
-                200, json={"status": "SUCCESS", "domains": []}
-            )
+            return httpx.Response(200, json={"status": "SUCCESS", "domains": []})
         return None
 
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]

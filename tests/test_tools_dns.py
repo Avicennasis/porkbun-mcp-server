@@ -18,30 +18,32 @@ from porkbun_mcp.tools import dns
 
 def test_list_dns_records(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "records": [
-                    {
-                        "id": "1",
-                        "type": "A",
-                        "name": "test.example.com",
-                        "content": "1.2.3.4",
-                        "ttl": "600",
-                    },
-                    {
-                        "id": "2",
-                        "type": "MX",
-                        "name": "example.com",
-                        "content": "mail.example.com",
-                        "prio": "10",
-                    },
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "records": [
+                        {
+                            "id": "1",
+                            "type": "A",
+                            "name": "test.example.com",
+                            "content": "1.2.3.4",
+                            "ttl": "600",
+                        },
+                        {
+                            "id": "2",
+                            "type": "MX",
+                            "name": "example.com",
+                            "content": "mail.example.com",
+                            "prio": "10",
+                        },
+                    ],
+                },
+            )
+            if r.url.path.endswith("/dns/retrieve/example.com")
+            else None
         )
-        if r.url.path.endswith("/dns/retrieve/example.com")
-        else None
     )
     out = dns.list_dns_records_impl(fake_client, "example.com")
     assert len(out["records"]) == 2
@@ -49,17 +51,19 @@ def test_list_dns_records(fake_client: PorkbunClient) -> None:
 
 def test_get_dns_record(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "records": [
-                    {"id": "42", "type": "A", "name": "x.example.com", "content": "1.1.1.1"}
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "records": [
+                        {"id": "42", "type": "A", "name": "x.example.com", "content": "1.1.1.1"}
+                    ],
+                },
+            )
+            if r.url.path.endswith("/dns/retrieve/example.com/42")
+            else None
         )
-        if r.url.path.endswith("/dns/retrieve/example.com/42")
-        else None
     )
     out = dns.get_dns_record_impl(fake_client, "example.com", "42")
     assert out["records"][0]["id"] == "42"
@@ -67,17 +71,17 @@ def test_get_dns_record(fake_client: PorkbunClient) -> None:
 
 def test_get_dns_records_by_name_type(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "records": [
-                    {"id": "10", "type": "TXT", "name": "_acme-challenge.example.com"}
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "records": [{"id": "10", "type": "TXT", "name": "_acme-challenge.example.com"}],
+                },
+            )
+            if "/dns/retrieveByNameType/example.com/TXT/_acme-challenge" in r.url.path
+            else None
         )
-        if "/dns/retrieveByNameType/example.com/TXT/_acme-challenge" in r.url.path
-        else None
     )
     out = dns.get_dns_records_by_name_type_impl(
         fake_client, "example.com", "TXT", "_acme-challenge"
@@ -107,10 +111,12 @@ def test_get_dns_records_by_name_type_no_subdomain(fake_client: PorkbunClient) -
 
 def _match_path(suffix: str, response_json: dict):
     """Build a handler returning ``response_json`` only for the given path suffix."""
+
     def handler(r: httpx.Request) -> httpx.Response | None:
         if r.url.path.endswith(suffix) or suffix in r.url.path:
             return httpx.Response(200, json=response_json)
         return None
+
     return handler
 
 
@@ -170,8 +176,11 @@ def test_create_dns_record_apex_uses_at_sign_in_audit(
     )
 
     dns.create_dns_record_impl(
-        fake_client, "example.com",
-        type="A", name="", content="1.1.1.1",
+        fake_client,
+        "example.com",
+        type="A",
+        name="",
+        content="1.1.1.1",
         reason="apex",
     )
 
@@ -189,9 +198,14 @@ def test_edit_dns_record_calls_api_and_emits_audit(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     dns.edit_dns_record_impl(
-        fake_client, "example.com", "42",
-        type="A", name="vm-x", content="5.6.7.8",
-        ttl=600, prio=None,
+        fake_client,
+        "example.com",
+        "42",
+        type="A",
+        name="vm-x",
+        content="5.6.7.8",
+        ttl=600,
+        prio=None,
         reason="IP rotation",
     )
 
@@ -213,8 +227,11 @@ def test_edit_by_name_type_omits_type_name_from_body(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     dns.edit_dns_records_by_name_type_impl(
-        fake_client, "example.com",
-        type="A", subdomain="vm-x", content="9.9.9.9",
+        fake_client,
+        "example.com",
+        type="A",
+        subdomain="vm-x",
+        content="9.9.9.9",
         reason="bulk rotate",
     )
 
@@ -240,8 +257,11 @@ def test_edit_by_name_type_apex(
 
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
     dns.edit_dns_records_by_name_type_impl(
-        fake_client, "example.com",
-        type="A", subdomain="", content="1.1.1.1",
+        fake_client,
+        "example.com",
+        type="A",
+        subdomain="",
+        content="1.1.1.1",
         reason="r",
     )
     assert captured_path[0].endswith("/dns/editByNameType/example.com/A")
@@ -257,7 +277,9 @@ def test_delete_dns_record_omits_target_and_records_id(
     )
 
     dns.delete_dns_record_impl(
-        fake_client, "example.com", "42",
+        fake_client,
+        "example.com",
+        "42",
         reason="Stale ACME challenge",
     )
 
@@ -279,8 +301,10 @@ def test_delete_by_name_type_keeps_target(
     )
 
     dns.delete_dns_records_by_name_type_impl(
-        fake_client, "example.com",
-        type="TXT", subdomain="_acme-challenge",
+        fake_client,
+        "example.com",
+        type="TXT",
+        subdomain="_acme-challenge",
         reason="cleanup",
     )
 
@@ -297,7 +321,8 @@ def test_bulk_create_fans_out_to_per_record_creates(
     )
 
     out = dns.bulk_create_dns_records_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         records=[
             {"type": "A", "name": "a", "content": "1.1.1.1"},
             {"type": "A", "name": "b", "content": "2.2.2.2"},
@@ -321,7 +346,8 @@ def test_bulk_create_partial_on_missing_fields(
     )
 
     out = dns.bulk_create_dns_records_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         records=[
             {"type": "A", "name": "a", "content": "1.1.1.1"},
             {"type": "A", "name": "b"},  # missing content
@@ -345,8 +371,11 @@ def test_audit_disabled_skips_emit(
     )
 
     dns.create_dns_record_impl(
-        fake_client, "example.com",
-        type="A", name="x", content="1.1.1.1",
+        fake_client,
+        "example.com",
+        type="A",
+        name="x",
+        content="1.1.1.1",
         reason="r",
         audit_enabled=False,
     )
@@ -359,17 +388,23 @@ def test_api_error_skips_audit_emit(
     """When Porkbun returns status:ERROR, the client raises and the
     audit emit line never executes."""
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            400,
-            json={"status": "ERROR", "message": "Bad type"},
+        lambda r: (
+            httpx.Response(
+                400,
+                json={"status": "ERROR", "message": "Bad type"},
+            )
+            if "/dns/create/example.com" in r.url.path
+            else None
         )
-        if "/dns/create/example.com" in r.url.path else None
     )
 
     with pytest.raises(PorkbunAPIError):
         dns.create_dns_record_impl(
-            fake_client, "example.com",
-            type="BOGUS", name="x", content="y",
+            fake_client,
+            "example.com",
+            type="BOGUS",
+            name="x",
+            content="y",
             reason="r",
         )
     assert subprocess_spy == []

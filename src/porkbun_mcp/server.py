@@ -135,9 +135,7 @@ def get_pricing_for_tld(tld: str, force_refresh: bool = False) -> dict:
     cached pricing table as ``get_pricing`` — no separate API call.
     ``force_refresh=True`` bypasses the cache."""
     try:
-        return account.get_pricing_for_tld_impl(
-            _get_client(), tld, force_refresh=force_refresh
-        )
+        return account.get_pricing_for_tld_impl(_get_client(), tld, force_refresh=force_refresh)
     except PorkbunError as e:
         return _wrap_error(e)
 
@@ -148,9 +146,7 @@ def list_supported_tlds(force_refresh: bool = False) -> dict:
     Derived from the same cached pricing table as ``get_pricing``.
     ``force_refresh=True`` bypasses the cache."""
     try:
-        return account.list_supported_tlds_impl(
-            _get_client(), force_refresh=force_refresh
-        )
+        return account.list_supported_tlds_impl(_get_client(), force_refresh=force_refresh)
     except PorkbunError as e:
         return _wrap_error(e)
 
@@ -183,7 +179,9 @@ def create_invite(email: str | None = None, return_url: str | None = None) -> di
     redirects the user after registration."""
     try:
         return account.create_invite_impl(
-            _get_client(), email=email, return_url=return_url,
+            _get_client(),
+            email=email,
+            return_url=return_url,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -205,7 +203,9 @@ def set_email_password(email_address: str, password: str) -> dict:
     is the full address (e.g. user@example.com)."""
     try:
         return account.set_email_password_impl(
-            _get_client(), email_address=email_address, password=password,
+            _get_client(),
+            email_address=email_address,
+            password=password,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -229,7 +229,8 @@ def retrieve_api_key(request_token: str) -> dict:
     API key on approval."""
     try:
         return account.retrieve_api_key_impl(
-            _get_client(), request_token=request_token,
+            _get_client(),
+            request_token=request_token,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -252,9 +253,14 @@ def get_marketplace(
     try:
         return marketplace.get_marketplace_impl(
             _get_client(),
-            start=start, limit=limit, query=query, tlds=tlds,
-            sld_length_min=sld_length_min, sld_length_max=sld_length_max,
-            sort_name=sort_name, sort_direction=sort_direction,
+            start=start,
+            limit=limit,
+            query=query,
+            tlds=tlds,
+            sld_length_min=sld_length_min,
+            sld_length_max=sld_length_max,
+            sort_name=sort_name,
+            sort_direction=sort_direction,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -270,9 +276,7 @@ def list_domains(start: int = 0, include_labels: bool = False) -> dict:
     """List all domains in the Porkbun account. ``start`` is a 0-indexed
     offset for pagination (Porkbun returns 1000 per page)."""
     try:
-        return domains.list_domains_impl(
-            _get_client(), start=start, include_labels=include_labels
-        )
+        return domains.list_domains_impl(_get_client(), start=start, include_labels=include_labels)
     except PorkbunError as e:
         return _wrap_error(e)
 
@@ -329,9 +333,12 @@ def register_domain(domain: str, cost: int, reason: str, agree_to_terms: str = "
     try:
         cfg = _get_config()
         return domains.register_domain_impl(
-            _get_client(), domain,
-            cost=cost, agree_to_terms=agree_to_terms,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            cost=cost,
+            agree_to_terms=agree_to_terms,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -346,9 +353,11 @@ def renew_domain(domain: str, cost: int, reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.renew_domain_impl(
-            _get_client(), domain,
+            _get_client(),
+            domain,
             cost=cost,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -363,9 +372,12 @@ def transfer_domain(domain: str, auth_code: str, cost: int, reason: str) -> dict
     try:
         cfg = _get_config()
         return domains.transfer_domain_impl(
-            _get_client(), domain,
-            auth_code=auth_code, cost=cost,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            auth_code=auth_code,
+            cost=cost,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -402,9 +414,11 @@ def update_auto_renew(domain: str, auto_renew: bool, reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.update_auto_renew_impl(
-            _get_client(), domain,
+            _get_client(),
+            domain,
             auto_renew=auto_renew,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -418,9 +432,12 @@ def create_glue(domain: str, host: str, ips: list[str], reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.create_glue_impl(
-            _get_client(), domain,
-            host=host, ips=ips,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            host=host,
+            ips=ips,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -432,9 +449,12 @@ def update_glue(domain: str, host: str, ips: list[str], reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.update_glue_impl(
-            _get_client(), domain,
-            host=host, ips=ips,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            host=host,
+            ips=ips,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -446,8 +466,11 @@ def delete_glue(domain: str, host: str, reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.delete_glue_impl(
-            _get_client(), domain,
-            host=host, reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            host=host,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -469,10 +492,15 @@ def add_url_forward(
     try:
         cfg = _get_config()
         return domains.add_url_forward_impl(
-            _get_client(), domain,
-            subdomain=subdomain, location=location,
-            type=type, include_path=include_path, wildcard=wildcard,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            subdomain=subdomain,
+            location=location,
+            type=type,
+            include_path=include_path,
+            wildcard=wildcard,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -485,8 +513,11 @@ def delete_url_forward(domain: str, record_id: str, reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.delete_url_forward_impl(
-            _get_client(), domain, record_id,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            record_id,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -500,9 +531,12 @@ def add_label(domain: str, label_name: str, color: str, reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.add_label_impl(
-            _get_client(), domain,
-            label_name=label_name, color=color,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            label_name=label_name,
+            color=color,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -514,8 +548,11 @@ def remove_label(domain: str, label_id: str, reason: str) -> dict:
     try:
         cfg = _get_config()
         return domains.remove_label_impl(
-            _get_client(), domain, label_id,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            label_id,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -543,8 +580,11 @@ def update_name_servers(domain: str, ns: list[str], reason: str) -> dict:
     try:
         cfg = _get_config()
         return nameservers.update_name_servers_impl(
-            _get_client(), domain,
-            ns=ns, reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            ns=ns,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -608,10 +648,16 @@ def create_dns_record(
     try:
         cfg = _get_config()
         return dns.create_dns_record_impl(
-            _get_client(), domain,
-            type=type, name=name, content=content,
-            ttl=ttl, prio=prio, notes=notes,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            type=type,
+            name=name,
+            content=content,
+            ttl=ttl,
+            prio=prio,
+            notes=notes,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -635,10 +681,17 @@ def edit_dns_record(
     try:
         cfg = _get_config()
         return dns.edit_dns_record_impl(
-            _get_client(), domain, record_id,
-            type=type, name=name, content=content,
-            ttl=ttl, prio=prio, notes=notes,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            record_id,
+            type=type,
+            name=name,
+            content=content,
+            ttl=ttl,
+            prio=prio,
+            notes=notes,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -660,10 +713,16 @@ def edit_dns_records_by_name_type(
     try:
         cfg = _get_config()
         return dns.edit_dns_records_by_name_type_impl(
-            _get_client(), domain,
-            type=type, subdomain=subdomain, content=content,
-            ttl=ttl, prio=prio, notes=notes,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            type=type,
+            subdomain=subdomain,
+            content=content,
+            ttl=ttl,
+            prio=prio,
+            notes=notes,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -675,34 +734,36 @@ def delete_dns_record(domain: str, record_id: str, reason: str) -> dict:
     try:
         cfg = _get_config()
         return dns.delete_dns_record_impl(
-            _get_client(), domain, record_id,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            record_id,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
 
 
 @mcp.tool()
-def delete_dns_records_by_name_type(
-    domain: str, type: str, subdomain: str, reason: str
-) -> dict:
+def delete_dns_records_by_name_type(domain: str, type: str, subdomain: str, reason: str) -> dict:
     """Bulk-delete every record matching (type, subdomain) on ``domain``.
     ``subdomain="" → apex. ``reason`` is required."""
     try:
         cfg = _get_config()
         return dns.delete_dns_records_by_name_type_impl(
-            _get_client(), domain,
-            type=type, subdomain=subdomain,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            type=type,
+            subdomain=subdomain,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
 
 
 @mcp.tool()
-def bulk_create_dns_records(
-    domain: str, records: list[dict], reason: str
-) -> dict:
+def bulk_create_dns_records(domain: str, records: list[dict], reason: str) -> dict:
     """Create multiple DNS records on ``domain``. Porkbun has no native
     bulk endpoint — this fans out one create per record with
     continue-and-report semantics: failures collect in ``failed``,
@@ -712,8 +773,11 @@ def bulk_create_dns_records(
     try:
         cfg = _get_config()
         return dns.bulk_create_dns_records_impl(
-            _get_client(), domain, records,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            records,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -755,14 +819,19 @@ def create_dnssec_record(
     try:
         cfg = _get_config()
         return dnssec.create_dnssec_record_impl(
-            _get_client(), domain,
-            key_tag=key_tag, alg=alg, digest_type=digest_type, digest=digest,
+            _get_client(),
+            domain,
+            key_tag=key_tag,
+            alg=alg,
+            digest_type=digest_type,
+            digest=digest,
             max_sig_life=max_sig_life,
             key_data_flags=key_data_flags,
             key_data_protocol=key_data_protocol,
             key_data_algorithm=key_data_algorithm,
             key_data_pub_key=key_data_pub_key,
-            reason=reason, audit_enabled=cfg.audit_enabled,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)
@@ -775,8 +844,11 @@ def delete_dnssec_record(domain: str, key_tag: str, reason: str) -> dict:
     try:
         cfg = _get_config()
         return dnssec.delete_dnssec_record_impl(
-            _get_client(), domain,
-            key_tag=key_tag, reason=reason, audit_enabled=cfg.audit_enabled,
+            _get_client(),
+            domain,
+            key_tag=key_tag,
+            reason=reason,
+            audit_enabled=cfg.audit_enabled,
         )
     except PorkbunError as e:
         return _wrap_error(e)

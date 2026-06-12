@@ -12,9 +12,7 @@ from porkbun_mcp.client import PorkbunClient
 
 
 @pytest.fixture(autouse=True)
-def isolated_pricing_cache(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def isolated_pricing_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point the pricing cache at a per-test XDG dir.
 
     pricing_cache resolves its path from os.environ at call time, so
@@ -31,6 +29,7 @@ def isolated_pricing_cache(
 def _reset_audit_handler():
     """Reset the cached audit handler between tests."""
     from porkbun_mcp import audit
+
     audit._handler = None
     yield
     audit._handler = None
@@ -42,6 +41,7 @@ def subprocess_spy(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
 
     Sets the handler to an external binary so tests can assert on argv shape."""
     from porkbun_mcp import audit
+
     audit._handler = None
     monkeypatch.setenv("PORKBUN_MCP_AUDIT_HANDLER", "/usr/local/bin/audit-spy")
 

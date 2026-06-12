@@ -14,20 +14,22 @@ from porkbun_mcp.tools import nameservers
 
 def test_get_name_servers(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "ns": [
-                    "curitiba.ns.porkbun.com",
-                    "fortaleza.ns.porkbun.com",
-                    "maceio.ns.porkbun.com",
-                    "salvador.ns.porkbun.com",
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "ns": [
+                        "curitiba.ns.porkbun.com",
+                        "fortaleza.ns.porkbun.com",
+                        "maceio.ns.porkbun.com",
+                        "salvador.ns.porkbun.com",
+                    ],
+                },
+            )
+            if "/domain/getNs/" in r.url.path
+            else None
         )
-        if "/domain/getNs/" in r.url.path
-        else None
     )
     out = nameservers.get_name_servers_impl(fake_client, "example.com")
     assert len(out["ns"]) == 4
@@ -59,7 +61,8 @@ def test_update_name_servers_calls_api_and_emits_audit(
         "salvador.ns.porkbun.com",
     ]
     nameservers.update_name_servers_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         ns=new_ns,
         reason="Phase 5 smoke prep — pulling NS to Porkbun",
     )
@@ -78,12 +81,16 @@ def test_update_name_servers_audit_disabled(
     fake_client: PorkbunClient, subprocess_spy: list[list[str]]
 ) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(200, json={"status": "SUCCESS"})
-        if "/domain/updateNs/example.com" in r.url.path else None
+        lambda r: (
+            httpx.Response(200, json={"status": "SUCCESS"})
+            if "/domain/updateNs/example.com" in r.url.path
+            else None
+        )
     )
 
     nameservers.update_name_servers_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         ns=["ns1.example.com"],
         reason="r",
         audit_enabled=False,
@@ -95,15 +102,20 @@ def test_update_name_servers_api_error_skips_audit(
     fake_client: PorkbunClient, subprocess_spy: list[list[str]]
 ) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            400, json={"status": "ERROR", "message": "Invalid NS"},
+        lambda r: (
+            httpx.Response(
+                400,
+                json={"status": "ERROR", "message": "Invalid NS"},
+            )
+            if "/domain/updateNs/example.com" in r.url.path
+            else None
         )
-        if "/domain/updateNs/example.com" in r.url.path else None
     )
 
     with pytest.raises(PorkbunAPIError):
         nameservers.update_name_servers_impl(
-            fake_client, "example.com",
+            fake_client,
+            "example.com",
             ns=["bogus"],
             reason="r",
         )

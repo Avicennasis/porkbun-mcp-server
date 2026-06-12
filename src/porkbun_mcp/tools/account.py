@@ -20,9 +20,7 @@ def ping_impl(client: PorkbunClient) -> dict[str, Any]:
     return client.post("/ping")
 
 
-def get_pricing_impl(
-    client: PorkbunClient, *, force_refresh: bool = False
-) -> dict[str, Any]:
+def get_pricing_impl(client: PorkbunClient, *, force_refresh: bool = False) -> dict[str, Any]:
     """Public TLD pricing table — no auth required by Porkbun, but our
     client always sends auth, which is harmless here. Served through the
     disk TTL cache (see ``pricing_cache``); ``force_refresh=True``
@@ -38,9 +36,7 @@ def check_availability_impl(client: PorkbunClient, domain: str) -> dict[str, Any
     return client.post(f"/domain/checkDomain/{domain}")
 
 
-def check_bulk_availability_impl(
-    client: PorkbunClient, domains: list[str]
-) -> dict[str, Any]:
+def check_bulk_availability_impl(client: PorkbunClient, domains: list[str]) -> dict[str, Any]:
     """Client-side fan-out: Porkbun has no native bulk availability."""
     results: dict[str, Any] = {}
     for d in domains:
@@ -91,9 +87,7 @@ def create_invite_impl(
     return client.post("/account/invite", body=body if body else None)
 
 
-def get_invite_status_impl(
-    client: PorkbunClient, token: str
-) -> dict[str, Any]:
+def get_invite_status_impl(client: PorkbunClient, token: str) -> dict[str, Any]:
     return client.post("/account/inviteStatus", body={"token": token})
 
 
@@ -109,16 +103,12 @@ def set_email_password_impl(
     )
 
 
-def request_api_key_impl(
-    client: PorkbunClient, *, name: str | None = None
-) -> dict[str, Any]:
+def request_api_key_impl(client: PorkbunClient, *, name: str | None = None) -> dict[str, Any]:
     body: dict[str, Any] = {}
     if name is not None:
         body["name"] = name
     return client.post("/apikey/request", body=body if body else None)
 
 
-def retrieve_api_key_impl(
-    client: PorkbunClient, *, request_token: str
-) -> dict[str, Any]:
+def retrieve_api_key_impl(client: PorkbunClient, *, request_token: str) -> dict[str, Any]:
     return client.post("/apikey/retrieve", body={"requestToken": request_token})

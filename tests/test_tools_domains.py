@@ -14,18 +14,20 @@ from porkbun_mcp.tools import domains
 
 def test_list_domains(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "domains": [
-                    {"domain": "example.com", "status": "ACTIVE"},
-                    {"domain": "example.net", "status": "ACTIVE"},
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "domains": [
+                        {"domain": "example.com", "status": "ACTIVE"},
+                        {"domain": "example.net", "status": "ACTIVE"},
+                    ],
+                },
+            )
+            if r.url.path.endswith("/domain/listAll")
+            else None
         )
-        if r.url.path.endswith("/domain/listAll")
-        else None
     )
     out = domains.list_domains_impl(fake_client)
     assert len(out["domains"]) == 2
@@ -50,17 +52,19 @@ def test_list_domains_pagination_arg(fake_client: PorkbunClient) -> None:
 
 def test_get_url_forwarding(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "forwards": [
-                    {"id": "1", "subdomain": "www", "location": "https://example.com"}
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "forwards": [
+                        {"id": "1", "subdomain": "www", "location": "https://example.com"}
+                    ],
+                },
+            )
+            if "/domain/getUrlForwarding/" in r.url.path
+            else None
         )
-        if "/domain/getUrlForwarding/" in r.url.path
-        else None
     )
     out = domains.get_url_forwarding_impl(fake_client, "example.com")
     assert out["forwards"][0]["subdomain"] == "www"
@@ -68,19 +72,21 @@ def test_get_url_forwarding(fake_client: PorkbunClient) -> None:
 
 def test_get_domain(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "domain": "example.com",
-                "status_code": "ACTIVE",
-                "createDate": "2024-01-15 10:00:00",
-                "expireDate": "2026-01-15 10:00:00",
-                "autoRenew": True,
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "domain": "example.com",
+                    "status_code": "ACTIVE",
+                    "createDate": "2024-01-15 10:00:00",
+                    "expireDate": "2026-01-15 10:00:00",
+                    "autoRenew": True,
+                },
+            )
+            if r.url.path.endswith("/domain/get/example.com")
+            else None
         )
-        if r.url.path.endswith("/domain/get/example.com")
-        else None
     )
     out = domains.get_domain_impl(fake_client, "example.com")
     assert out["domain"] == "example.com"
@@ -89,18 +95,20 @@ def test_get_domain(fake_client: PorkbunClient) -> None:
 
 def test_get_glue(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "glue": [
-                    {"host": "ns1.example.com", "ips": ["1.2.3.4"]},
-                    {"host": "ns2.example.com", "ips": ["5.6.7.8"]},
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "glue": [
+                        {"host": "ns1.example.com", "ips": ["1.2.3.4"]},
+                        {"host": "ns2.example.com", "ips": ["5.6.7.8"]},
+                    ],
+                },
+            )
+            if "/domain/getGlue/" in r.url.path
+            else None
         )
-        if "/domain/getGlue/" in r.url.path
-        else None
     )
     out = domains.get_glue_impl(fake_client, "example.com")
     assert len(out["glue"]) == 2
@@ -109,15 +117,17 @@ def test_get_glue(fake_client: PorkbunClient) -> None:
 
 def test_list_labels(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "labels": [{"id": "1", "title": "production", "color": "orange"}],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "labels": [{"id": "1", "title": "production", "color": "orange"}],
+                },
+            )
+            if r.url.path.endswith("/domain/labels/list")
+            else None
         )
-        if r.url.path.endswith("/domain/labels/list")
-        else None
     )
     out = domains.list_labels_impl(fake_client)
     assert out["labels"][0]["title"] == "production"
@@ -133,6 +143,7 @@ def _match_path(suffix: str, response_json: dict):
         if suffix in r.url.path:
             return httpx.Response(200, json=response_json)
         return None
+
     return handler
 
 
@@ -161,8 +172,10 @@ def test_register_domain_sends_cost_and_agree(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     out = domains.register_domain_impl(
-        fake_client, "newsite.com",
-        cost=913, agree_to_terms="yes",
+        fake_client,
+        "newsite.com",
+        cost=913,
+        agree_to_terms="yes",
         reason="New project domain",
     )
 
@@ -185,7 +198,8 @@ def test_renew_domain_sends_cost(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     domains.renew_domain_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         cost=913,
         reason="Annual renewal",
     )
@@ -205,7 +219,8 @@ def test_transfer_domain_sends_auth_code_and_cost(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     domains.transfer_domain_impl(
-        fake_client, "moveme.com",
+        fake_client,
+        "moveme.com",
         auth_code="EPP-SECRET-123",
         cost=913,
         reason="Consolidating registrars",
@@ -219,15 +234,17 @@ def test_transfer_domain_sends_auth_code_and_cost(
 
 def test_get_transfer_status(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "transfer": {"domain": "moveme.com", "status": "pending"},
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "transfer": {"domain": "moveme.com", "status": "pending"},
+                },
+            )
+            if "/domain/getTransfer/" in r.url.path
+            else None
         )
-        if "/domain/getTransfer/" in r.url.path
-        else None
     )
     out = domains.get_transfer_status_impl(fake_client, "moveme.com")
     assert out["transfer"]["status"] == "pending"
@@ -235,17 +252,19 @@ def test_get_transfer_status(fake_client: PorkbunClient) -> None:
 
 def test_list_transfers(fake_client: PorkbunClient) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            200,
-            json={
-                "status": "SUCCESS",
-                "transfers": [
-                    {"domain": "moveme.com", "status": "pending"},
-                ],
-            },
+        lambda r: (
+            httpx.Response(
+                200,
+                json={
+                    "status": "SUCCESS",
+                    "transfers": [
+                        {"domain": "moveme.com", "status": "pending"},
+                    ],
+                },
+            )
+            if r.url.path.endswith("/domain/listTransfers")
+            else None
         )
-        if r.url.path.endswith("/domain/listTransfers")
-        else None
     )
     out = domains.list_transfers_impl(fake_client)
     assert len(out["transfers"]) == 1
@@ -264,7 +283,8 @@ def test_update_auto_renew_enable(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     domains.update_auto_renew_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         auto_renew=True,
         reason="Prevent accidental expiry",
     )
@@ -287,7 +307,8 @@ def test_update_auto_renew_disable(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     domains.update_auto_renew_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         auto_renew=False,
         reason="Domain being transferred out",
     )
@@ -311,8 +332,10 @@ def test_create_glue_emits_audit(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     domains.create_glue_impl(
-        fake_client, "example.com",
-        host="ns1", ips=["1.2.3.4"],
+        fake_client,
+        "example.com",
+        host="ns1",
+        ips=["1.2.3.4"],
         reason="Custom NS",
     )
 
@@ -333,8 +356,10 @@ def test_update_glue_emits_audit(
     )
 
     domains.update_glue_impl(
-        fake_client, "example.com",
-        host="ns1", ips=["5.6.7.8"],
+        fake_client,
+        "example.com",
+        host="ns1",
+        ips=["5.6.7.8"],
         reason="IP rotation",
     )
 
@@ -351,7 +376,8 @@ def test_delete_glue_emits_audit(
     )
 
     domains.delete_glue_impl(
-        fake_client, "example.com",
+        fake_client,
+        "example.com",
         host="ns1",
         reason="Decommission",
     )
@@ -374,9 +400,13 @@ def test_add_url_forward_emits_audit(
     fake_client._handlers.append(handler)  # type: ignore[attr-defined]
 
     domains.add_url_forward_impl(
-        fake_client, "example.com",
-        subdomain="www", location="https://example.org",
-        type="permanent", include_path="yes", wildcard="no",
+        fake_client,
+        "example.com",
+        subdomain="www",
+        location="https://example.org",
+        type="permanent",
+        include_path="yes",
+        wildcard="no",
         reason="Apex-to-www redirect",
     )
 
@@ -400,8 +430,10 @@ def test_add_url_forward_apex_uses_at_sign(
     )
 
     domains.add_url_forward_impl(
-        fake_client, "example.com",
-        subdomain="", location="https://example.org",
+        fake_client,
+        "example.com",
+        subdomain="",
+        location="https://example.org",
         reason="apex redirect",
     )
 
@@ -417,7 +449,9 @@ def test_delete_url_forward_emits_audit(
     )
 
     domains.delete_url_forward_impl(
-        fake_client, "example.com", record_id="77",
+        fake_client,
+        "example.com",
+        record_id="77",
         reason="Cleanup",
     )
 
@@ -442,8 +476,10 @@ def test_add_label_emits_audit_and_returns_id(
     )
 
     out = domains.add_label_impl(
-        fake_client, "example.com",
-        label_name="production", color="orange",
+        fake_client,
+        "example.com",
+        label_name="production",
+        color="orange",
         reason="Tagging fleet",
     )
 
@@ -464,7 +500,9 @@ def test_remove_label_emits_audit(
     )
 
     domains.remove_label_impl(
-        fake_client, "example.com", label_id="99",
+        fake_client,
+        "example.com",
+        label_id="99",
         reason="Cleanup",
     )
 
@@ -484,8 +522,10 @@ def test_registrar_mutation_audit_disabled_skips_emit(
     )
 
     domains.create_glue_impl(
-        fake_client, "example.com",
-        host="ns1", ips=["1.1.1.1"],
+        fake_client,
+        "example.com",
+        host="ns1",
+        ips=["1.1.1.1"],
         reason="r",
         audit_enabled=False,
     )
@@ -496,16 +536,22 @@ def test_registrar_mutation_api_error_skips_audit(
     fake_client: PorkbunClient, subprocess_spy: list[list[str]]
 ) -> None:
     fake_client._handlers.append(  # type: ignore[attr-defined]
-        lambda r: httpx.Response(
-            400, json={"status": "ERROR", "message": "Bad host"},
+        lambda r: (
+            httpx.Response(
+                400,
+                json={"status": "ERROR", "message": "Bad host"},
+            )
+            if "/domain/createGlue/example.com/bad" in r.url.path
+            else None
         )
-        if "/domain/createGlue/example.com/bad" in r.url.path else None
     )
 
     with pytest.raises(PorkbunAPIError):
         domains.create_glue_impl(
-            fake_client, "example.com",
-            host="bad", ips=["1.1.1.1"],
+            fake_client,
+            "example.com",
+            host="bad",
+            ips=["1.1.1.1"],
             reason="r",
         )
     assert subprocess_spy == []

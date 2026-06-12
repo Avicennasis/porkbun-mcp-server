@@ -60,9 +60,7 @@ def test_client_merges_extra_body() -> None:
 def test_client_raises_on_status_error_in_body() -> None:
     """Porkbun returns 200 with status:'ERROR' on app-level failures."""
     transport = httpx.MockTransport(
-        lambda r: httpx.Response(
-            200, json={"status": "ERROR", "message": "Domain not found."}
-        )
+        lambda r: httpx.Response(200, json={"status": "ERROR", "message": "Domain not found."})
     )
     client = PorkbunClient(
         "https://api.porkbun.com/api/json/v3", "pk1_x", "sk1_x", transport=transport

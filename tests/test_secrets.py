@@ -6,10 +6,12 @@ from porkbun_mcp.secrets import load_credentials
 
 
 def test_load_credentials_from_env() -> None:
-    api_key, secret_key = load_credentials(env={
-        "PORKBUN_API_KEY": "pk1_x",
-        "PORKBUN_SECRET_KEY": "sk1_x",
-    })
+    api_key, secret_key = load_credentials(
+        env={
+            "PORKBUN_API_KEY": "pk1_x",
+            "PORKBUN_SECRET_KEY": "sk1_x",
+        }
+    )
     assert api_key == "pk1_x"
     assert secret_key == "sk1_x"
 
@@ -31,10 +33,12 @@ def test_load_credentials_partial_secret_key_only() -> None:
 
 
 def test_load_credentials_strips_whitespace() -> None:
-    api_key, secret_key = load_credentials(env={
-        "PORKBUN_API_KEY": "  pk1_x  ",
-        "PORKBUN_SECRET_KEY": "  sk1_x  ",
-    })
+    api_key, secret_key = load_credentials(
+        env={
+            "PORKBUN_API_KEY": "  pk1_x  ",
+            "PORKBUN_SECRET_KEY": "  sk1_x  ",
+        }
+    )
     assert api_key == "pk1_x"
     assert secret_key == "sk1_x"
 

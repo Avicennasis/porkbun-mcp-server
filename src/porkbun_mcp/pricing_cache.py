@@ -51,13 +51,17 @@ def cache_ttl_seconds(env: Mapping[str, str] | None = None) -> float:
     except ValueError:
         log.warning(
             "Ignoring non-numeric %s=%r; using default %.0fs",
-            TTL_ENV_VAR, raw, DEFAULT_TTL_SECONDS,
+            TTL_ENV_VAR,
+            raw,
+            DEFAULT_TTL_SECONDS,
         )
         return DEFAULT_TTL_SECONDS
     if ttl < 0:
         log.warning(
             "Ignoring negative %s=%r; using default %.0fs",
-            TTL_ENV_VAR, raw, DEFAULT_TTL_SECONDS,
+            TTL_ENV_VAR,
+            raw,
+            DEFAULT_TTL_SECONDS,
         )
         return DEFAULT_TTL_SECONDS
     return ttl
