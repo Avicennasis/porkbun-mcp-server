@@ -1,26 +1,26 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-| Version | Supported          |
-|---------|--------------------|
-| 0.x     | :white_check_mark: |
+Only the latest release tag is supported. Fixes will land on `main` and be
+cut as a new patch release; older tags will not be back-patched.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-If you discover a security vulnerability, please report it responsibly:
+Please **do not** open a public GitHub issue for security problems.
 
-1. **Do not** open a public issue.
-2. Email **avicennasis@gmail.com** with a description of the vulnerability.
-3. Include steps to reproduce if possible.
+Email **Avicennasis@gmail.com** with:
 
-You should receive a response within 72 hours. If the vulnerability is confirmed, a fix will be released as soon as practical and you will be credited (unless you prefer otherwise).
+- A description of the issue.
+- Steps to reproduce (or a proof-of-concept).
+- The version or commit SHA you found it against.
+- Any suggested mitigation if you have one.
 
-## Scope
+Expect an acknowledgement within a week. This is a side-project — there is
+no bug bounty and no SLA — but security issues are taken seriously and a
+fix and disclosure will be coordinated with you.
 
-This server handles Porkbun API credentials (`PORKBUN_API_KEY`, `PORKBUN_SECRET_KEY`) and makes authenticated API calls to Porkbun's v3 API. Security-relevant areas include:
+## Out of scope
 
-- Credential handling and storage
-- Audit log integrity
-- Input validation for DNS record mutations
-- Dependency supply chain
+- Issues in upstream dependencies (report upstream).
+- Misconfiguration by consumers of this project.

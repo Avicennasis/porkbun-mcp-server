@@ -1,44 +1,41 @@
-# Contributing
+# Contributing to porkbun-mcp-server
 
-Contributions are welcome! Here's how to get started.
+Thanks for considering a contribution. Bug reports, docs fixes, and small
+improvements are all welcome.
 
-## Development Setup
+## Dev setup
 
 ```bash
 git clone https://github.com/Avicennasis/porkbun-mcp-server.git
 cd porkbun-mcp-server
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e '.[test]'
+pre-commit install
 ```
 
-## Running Tests
+## Running the tests
 
 ```bash
-pytest -v
+pytest
 ```
 
-Tests use [vcrpy](https://github.com/kevin1024/vcrpy) cassettes for API responses — no live Porkbun account needed for the test suite.
+CI runs the tests against Python 3.11, 3.12, 3.13 — make sure they pass locally
+before opening a PR.
 
-## Code Style
+## Code style
 
-This project uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting:
+This project uses [ruff](https://github.com/astral-sh/ruff) for linting and
+formatting, wired in via pre-commit. `pre-commit run --all-files` runs the
+full check locally. CI runs the same hooks.
 
-```bash
-ruff check src/ tests/
-ruff format src/ tests/
-```
+## PR checklist
 
-## Pull Requests
+- [ ] Tests added or updated; `pytest` is green locally.
+- [ ] `pre-commit run --all-files` is clean.
+- [ ] README and docs updated if public behavior changed.
+- [ ] `CHANGELOG.md` updated under `[Unreleased]`.
 
-1. Fork the repo and create a feature branch.
-2. Add tests for new functionality.
-3. Ensure `pytest` and `ruff check` pass.
-4. Open a PR against `main`.
+## Code of Conduct
 
-## Adding a New Tool
-
-1. Add the implementation in the appropriate `src/porkbun_mcp/tools/<module>.py`.
-2. If the tool is a mutation, call `audit.emit_dns_change()` or `audit.emit_domain_change()` with a `reason` parameter.
-3. Add tests in `tests/test_tools_<module>.py`.
-4. Update the tool count in `README.md`.
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
+Be respectful; assume good faith.

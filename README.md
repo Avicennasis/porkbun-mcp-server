@@ -1,8 +1,14 @@
 # porkbun-mcp-server
 
+[![CI](https://github.com/Avicennasis/porkbun-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Avicennasis/porkbun-mcp-server/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/Avicennasis/porkbun-mcp-server/branch/main/graph/badge.svg)](https://codecov.io/gh/Avicennasis/porkbun-mcp-server)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Avicennasis/porkbun-mcp-server/badge)](https://scorecard.dev/viewer/?uri=github.com/Avicennasis/porkbun-mcp-server)
 [![PyPI](https://img.shields.io/pypi/v/porkbun-mcp-server)](https://pypi.org/project/porkbun-mcp-server/)
+[![Release](https://img.shields.io/github/v/release/Avicennasis/porkbun-mcp-server?display_name=tag)](https://github.com/Avicennasis/porkbun-mcp-server/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 Model Context Protocol server for [Porkbun's API v3](https://porkbun.com/api/json/v3/documentation) — full coverage of domains, DNS records, DNSSEC, SSL bundle retrieval, glue records, URL forwarding, labels, domain registration/renewal/transfers, marketplace, account management, email hosting, and API key management.
 

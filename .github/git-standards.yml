@@ -1,0 +1,6 @@
+# /git-standards configuration — Avicennasis/porkbun-mcp-server
+#
+# Release tier opted out: the repo ships an operator-managed release.yml
+# workflow using PyPI OIDC trusted publisher. The standard release template
+# would conflict with this existing workflow.
+release_artifacts: false

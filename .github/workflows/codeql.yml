@@ -1,4 +1,4 @@
-name: CodeQL
+name: "CodeQL"
 
 on:
   push:
@@ -10,12 +10,28 @@ on:
 
 jobs:
   analyze:
+    name: Analyze
     runs-on: ubuntu-latest
     permissions:
       security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions]
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
         with:
-          languages: python
-      - uses: github/codeql-action/analyze@v3
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+        with:
+          category: "/language:${{ matrix.language }}"
