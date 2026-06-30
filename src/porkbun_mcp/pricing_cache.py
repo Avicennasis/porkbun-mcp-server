@@ -1,4 +1,4 @@
-"""Disk-backed TTL cache for the Porkbun pricing table (claudecode#3168).
+"""Disk-backed TTL cache for the Porkbun pricing table.
 
 ``/pricing/get`` returns a ~30KB payload that changes on the order of
 months, so hitting the live API on every call wastes both latency and our

@@ -1,39 +1,72 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+All notable changes to this project will be documented in this file.
 
-### Phase 6
-- 2026-06-10: TTL disk cache for the pricing table (claudecode#3168).
-  New `pricing_cache.py`: persists the last successful `/pricing/get`
-  payload to `$XDG_CACHE_HOME/porkbun-mcp/pricing.json` (default
-  `~/.cache/porkbun-mcp/pricing.json`), 24h TTL configurable via
-  `PORKBUN_PRICING_CACHE_TTL` (seconds, `0` disables). `get_pricing`,
-  `get_pricing_for_tld`, and `list_supported_tlds` all read through the
-  same cache and gain a `force_refresh` parameter. Corrupt/unwritable
-  cache falls back to live fetch; writes are atomic (`os.replace`).
-  23 new tests (119 total).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.5.0] — 2026-06-10
+
+### Added
+- **TTL disk cache for pricing tools.** `get_pricing`, `get_pricing_for_tld`,
+  and `list_supported_tlds` now read through a disk cache at
+  `$XDG_CACHE_HOME/porkbun-mcp/pricing.json` (default
+  `~/.cache/porkbun-mcp/pricing.json`). 24h TTL, configurable via
+  `PORKBUN_PRICING_CACHE_TTL` (seconds, `0` disables). All three tools
+  gain a `force_refresh` parameter. Corrupt/unwritable cache falls back
+  to live fetch; writes are atomic (`os.replace`). 23 new tests.
+- **Pluggable audit handler.** Audit output is now configurable via
+  `PORKBUN_MCP_AUDIT_HANDLER` env var: `"jsonl"` (default, writes to
+  `~/.local/share/porkbun-mcp/audit.jsonl`), an absolute path to an
+  external binary, or `"none"` to disable.
 
 ### Security
-- 2026-05-11: bump `mcp` SDK pin to `>=1.23.0,<1.24.0` (running 1.23.3) to clear three high-severity advisories on the prior `<1.9.0` pin: MCP Python SDK missing DNS rebinding protection (fixed 1.23.0), FastMCP validation-error DoS (1.9.4), Streamable HTTP Transport unhandled-exception DoS (1.10.0). digitalocean-dns-mcp is the fleet canary on `<2.0.0`. All 37 tests pass on 1.23.3.
+- Bump `mcp` SDK pin to `>=1.23.0,<1.24.0` to clear three high-severity
+  advisories on the prior `<1.9.0` pin.
 
-### Phase 0
-- Repo scaffold, MIT license, hatchling build, src/ layout.
-- `secrets.py` parses `## Porkbun` section out of `~/.claude/secrets.md`.
-- `config.py` Settings dataclass with audit-log paths.
-- `client.py` httpx wrapper, POST-only with credential injection, 429 retry/backoff.
-- `errors.py` PorkbunError hierarchy + AuditLogPathDenied.
-- `server.py` FastMCP entrypoint (no `__future__ annotations` — landmine).
-- `tools/account.py` ping_impl.
-- 19 unit tests; registered as `porkbun: ✓ Connected` at user scope.
+## [0.4.0] — 2026-05-11
 
-### Phase 1
-- 15 read tools across 6 modules:
-  - `account.py`: `get_pricing`, `get_account_balance`, `check_availability`, `check_bulk_availability` (client-side fan-out), `get_pricing_for_tld`, `list_supported_tlds`
-  - `domains.py`: `list_domains` (with pagination + `include_labels`), `get_url_forwarding`, `list_labels`
-  - `nameservers.py`: `get_name_servers`
-  - `dns.py`: `list_dns_records`, `get_dns_record`, `get_dns_records_by_name_type`
-  - `dnssec.py`: `get_dnssec_records`
-  - `ssl.py`: `get_ssl_bundle`
-- Tool surface: 16 (all read-only). Mutation tools come in Phases 2-4.
-- `fake_client` fixture promoted to `conftest.py` for DRY.
-- 37 unit tests; FastMCP `list_tools()` confirms clean registration.
+### Added
+- **Domain registration, renewal, and transfer tools.** `register_domain`,
+  `renew_domain`, `transfer_domain`, `get_transfer_status`, `list_transfers`.
+- **Email hosting tools.** `set_email_password`, `request_api_key`,
+  `retrieve_api_key`.
+- **Marketplace tools.** `get_marketplace`, `add_label`, `remove_label`,
+  `list_labels`, `create_invite`, `get_invite_status`.
+
+## [0.3.0] — 2026-05-08
+
+### Added
+- **URL forwarding tools.** `add_url_forward`, `get_url_forwarding`,
+  `delete_url_forward`.
+- **Glue record tools.** `create_glue`, `get_glue`, `update_glue`,
+  `delete_glue`.
+- **Nameserver tools.** `get_name_servers`, `update_name_servers`,
+  `update_auto_renew`.
+
+## [0.2.0] — 2026-05-06
+
+### Added
+- **DNS mutation tools.** `create_dns_record`, `edit_dns_record`,
+  `delete_dns_record`, `bulk_create_dns_records`,
+  `edit_dns_records_by_name_type`, `delete_dns_records_by_name_type`.
+- **DNSSEC tools.** `create_dnssec_record`, `delete_dnssec_record`.
+- **Domain management.** `get_domain`, `get_api_settings`.
+- Audit emit for all mutation tools with `reason` parameter.
+
+## [0.1.0] — 2026-05-04
+
+### Added
+- Initial release: 16 read-only tools across 6 modules.
+- `account.py`: `ping`, `get_pricing`, `get_account_balance`,
+  `check_availability`, `check_bulk_availability`, `get_pricing_for_tld`,
+  `list_supported_tlds`.
+- `domains.py`: `list_domains`, `get_url_forwarding`, `list_labels`.
+- `dns.py`: `list_dns_records`, `get_dns_record`, `get_dns_records_by_name_type`.
+- `dnssec.py`: `get_dnssec_records`.
+- `ssl.py`: `get_ssl_bundle`.
+- `nameservers.py`: `get_name_servers`.
+- FastMCP stdio server with env-var configuration.
+- 37 unit tests.

@@ -1,4 +1,4 @@
-"""pricing_cache.py tests — disk TTL cache for /pricing/get (claudecode#3168).
+"""pricing_cache.py tests — disk TTL cache for /pricing/get.
 
 The autouse ``isolated_pricing_cache`` fixture (conftest.py) points
 XDG_CACHE_HOME at a per-test tmp dir, so these tests exercise the real
