@@ -8,3 +8,6 @@ build/
 dist/
 .coverage
 htmlcov/
+
+# Feature Factory / stargazer context (local-only)
+.stargazer-*
