@@ -7,7 +7,10 @@ Every mutation emits one audit row. The handler is selected via the
   ``~/.local/share/porkbun-mcp/audit.jsonl`` (XDG-friendly default).
 - **absolute path** (e.g. ``/usr/local/bin/inkwell-emit``) — shell out
   to the given binary with ``--source``, ``--category``, ``--action``,
-  ``--service``, ``--reason``, ``--target``, ``--payload`` flags.
+  ``--service``, ``--reason``, ``--target`` flags. The payload is passed
+  as ``--payload -`` with the JSON on **stdin** (never as an argv value,
+  which would be world-readable via ``/proc/PID/cmdline``); the binary
+  must support the ``-`` stdin convention (inkwell-emit does).
 - **``"none"``** — disable audit entirely (not recommended).
 
 Set ``PORKBUN_MCP_AUDIT_ENABLED=false`` to disable without changing the handler.
@@ -19,13 +22,15 @@ registrar-level mutations (glue records, URL forwarding, labels) emit
 
 from __future__ import annotations
 
-import contextlib
 import json
+import logging
 import os
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+log = logging.getLogger("porkbun_mcp.audit")
 
 SOURCE = "porkbun-mcp"
 CATEGORY_DNS = "dns"
@@ -82,8 +87,11 @@ def _emit(
         try:
             with open(_jsonl_path(), "a") as f:
                 f.write(json.dumps(row, default=str) + "\n")
-        except OSError:
-            pass
+        except OSError as e:
+            # Audit failures must never block mutations, but they must be
+            # visible (B1-127): a full disk or permission error would
+            # otherwise silently lose audit rows.
+            log.warning("audit: failed to append JSONL row: %s", e)
         return
 
     # External binary handler (absolute path)
@@ -102,10 +110,24 @@ def _emit(
     ]
     if target:
         cmd.extend(["--target", target])
+    # Payload travels via stdin ('--payload -'), never argv: argv is
+    # world-readable in /proc/PID/cmdline and TXT records etc. can carry
+    # verification secrets (B1-126).
+    stdin_payload: bytes | None = None
     if payload:
-        cmd.extend(["--payload", json.dumps(payload, default=str)])
-    with contextlib.suppress(OSError, subprocess.SubprocessError):
-        subprocess.run(cmd, capture_output=True, timeout=5)
+        cmd.extend(["--payload", "-"])
+        stdin_payload = json.dumps(payload, default=str).encode()
+    # Audit failures must never block mutations, but they must be visible
+    # (B1-128): a missing/broken emit binary would otherwise silently lose
+    # every audit row.
+    try:
+        result = subprocess.run(cmd, capture_output=True, timeout=5, input=stdin_payload)
+    except (OSError, subprocess.SubprocessError) as e:
+        log.warning("audit: failed to run %s: %s", handler, e)
+        return
+    if result.returncode != 0:
+        stderr_txt = result.stderr.decode("utf-8", "replace").strip()[:200]
+        log.warning("audit: %s exited %d: %s", handler, result.returncode, stderr_txt)
 
 
 def emit_dns_change(

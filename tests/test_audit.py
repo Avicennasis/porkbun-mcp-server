@@ -31,6 +31,20 @@ def _capture_subprocess(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     return captured
 
 
+def _capture_subprocess_full(
+    monkeypatch: pytest.MonkeyPatch,
+) -> list[tuple[list[str], bytes | None]]:
+    """Like _capture_subprocess but also records the stdin input= bytes."""
+    calls: list[tuple[list[str], bytes | None]] = []
+
+    def fake_run(cmd, **kw):
+        calls.append((cmd, kw.get("input")))
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    return calls
+
+
 def _set_handler(monkeypatch: pytest.MonkeyPatch, handler: str) -> None:
     monkeypatch.setenv("PORKBUN_MCP_AUDIT_HANDLER", handler)
 
@@ -42,7 +56,7 @@ def test_emit_dns_change_external_handler_full_args(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _set_handler(monkeypatch, "/usr/local/bin/my-audit")
-    captured = _capture_subprocess(monkeypatch)
+    calls = _capture_subprocess_full(monkeypatch)
 
     audit.emit_dns_change(
         action="POST",
@@ -54,8 +68,8 @@ def test_emit_dns_change_external_handler_full_args(
         record_id=99,
     )
 
-    assert len(captured) == 1
-    cmd = captured[0]
+    assert len(calls) == 1
+    cmd, stdin = calls[0]
     assert cmd[0] == "/usr/local/bin/my-audit"
     assert cmd[cmd.index("--source") + 1] == "porkbun-mcp"
     assert cmd[cmd.index("--category") + 1] == "dns"
@@ -63,7 +77,10 @@ def test_emit_dns_change_external_handler_full_args(
     assert cmd[cmd.index("--service") + 1] == "example.com"
     assert cmd[cmd.index("--target") + 1] == "A `web`"
     assert cmd[cmd.index("--reason") + 1] == "vhost migration"
-    payload = json.loads(cmd[cmd.index("--payload") + 1])
+    # B1-126: payload travels via stdin, argv carries only the '-' sentinel
+    assert cmd[cmd.index("--payload") + 1] == "-"
+    assert stdin is not None
+    payload = json.loads(stdin)
     assert payload == {"content": "1.2.3.4", "record_id": 99}
 
 
@@ -108,7 +125,7 @@ def test_emit_dns_change_filters_empty_string_extras(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _set_handler(monkeypatch, "/usr/local/bin/audit")
-    captured = _capture_subprocess(monkeypatch)
+    calls = _capture_subprocess_full(monkeypatch)
 
     audit.emit_dns_change(
         action="POST",
@@ -121,7 +138,9 @@ def test_emit_dns_change_filters_empty_string_extras(
         good="kept",
     )
 
-    payload = json.loads(captured[0][captured[0].index("--payload") + 1])
+    _cmd, stdin = calls[0]
+    assert stdin is not None
+    payload = json.loads(stdin)
     assert payload == {"good": "kept"}
 
 
@@ -341,3 +360,120 @@ def test_emit_dns_change_action_verbs(monkeypatch: pytest.MonkeyPatch) -> None:
         "PATCH_FAIL",
         "DELETE_FAIL",
     }
+
+
+# ---------------------------------------------------------------------------
+# Failure logging (B1-127 / B1-128)
+# ---------------------------------------------------------------------------
+
+
+def test_external_handler_launch_failure_is_logged(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """B1-128: a failed inkwell-emit launch must be logged, not swallowed."""
+    _set_handler(monkeypatch, "/nonexistent/binary")
+
+    def boom(cmd, **kw):
+        raise FileNotFoundError("binary not installed")
+
+    monkeypatch.setattr(subprocess, "run", boom)
+
+    with caplog.at_level("WARNING", logger="porkbun_mcp.audit"):
+        audit.emit_dns_change(
+            action="POST",
+            domain="example.com",
+            record_type="A",
+            record_name="web",
+            reason="r",
+        )
+
+    assert "failed to run /nonexistent/binary" in caplog.text
+
+
+def test_external_handler_nonzero_exit_is_logged(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """B1-128: a non-zero exit from the emit binary must be logged."""
+    _set_handler(monkeypatch, "/usr/local/bin/audit")
+
+    def fail_run(cmd, **kw):
+        return subprocess.CompletedProcess(args=cmd, returncode=2, stdout=b"", stderr=b"db locked")
+
+    monkeypatch.setattr(subprocess, "run", fail_run)
+
+    with caplog.at_level("WARNING", logger="porkbun_mcp.audit"):
+        audit.emit_dns_change(
+            action="POST",
+            domain="example.com",
+            record_type="A",
+            record_name="web",
+            reason="r",
+        )
+
+    assert "exited 2" in caplog.text
+    assert "db locked" in caplog.text
+
+
+def test_jsonl_write_failure_is_logged(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Path,
+) -> None:
+    """B1-127: JSONL write failures (disk/permissions) must be logged."""
+    # Point XDG_DATA_HOME at a regular FILE so the mkdir under it raises.
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("occupied")
+    monkeypatch.setenv("XDG_DATA_HOME", str(blocker))
+    _set_handler(monkeypatch, "jsonl")
+
+    with caplog.at_level("WARNING", logger="porkbun_mcp.audit"):
+        audit.emit_dns_change(
+            action="POST",
+            domain="example.com",
+            record_type="A",
+            record_name="web",
+            reason="r",
+        )
+
+    assert "failed to append JSONL row" in caplog.text
+
+
+def test_emit_payload_travels_via_stdin_not_argv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """B1-126: no argv element may contain payload JSON — only the '-' sentinel."""
+    _set_handler(monkeypatch, "/usr/local/bin/audit")
+    calls = _capture_subprocess_full(monkeypatch)
+
+    audit.emit_dns_change(
+        action="POST",
+        domain="example.com",
+        record_type="TXT",
+        record_name="_acme-challenge",
+        reason="cert issuance",
+        content="secret-verification-token",
+    )
+
+    cmd, stdin = calls[0]
+    assert cmd[cmd.index("--payload") + 1] == "-"
+    assert not any("secret-verification-token" in arg for arg in cmd)
+    assert stdin is not None
+    assert b"secret-verification-token" in stdin
+
+
+def test_emit_no_payload_means_no_stdin(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without extras there is no --payload flag and no stdin input."""
+    _set_handler(monkeypatch, "/usr/local/bin/audit")
+    calls = _capture_subprocess_full(monkeypatch)
+
+    audit.emit_dns_change(
+        action="DELETE",
+        domain="example.com",
+        record_type="A",
+        record_name="web",
+        reason="cleanup",
+    )
+
+    cmd, stdin = calls[0]
+    assert "--payload" not in cmd
+    assert stdin is None

@@ -17,7 +17,7 @@ from ..client import PorkbunClient
 
 def ping_impl(client: PorkbunClient) -> dict[str, Any]:
     """Authenticated ping; returns ``{"status": "SUCCESS", "yourIp": "<ip>"}``."""
-    return client.post("/ping")
+    return client.post("/ping", idempotent=True)
 
 
 def get_pricing_impl(client: PorkbunClient, *, force_refresh: bool = False) -> dict[str, Any]:
@@ -29,11 +29,11 @@ def get_pricing_impl(client: PorkbunClient, *, force_refresh: bool = False) -> d
 
 
 def get_account_balance_impl(client: PorkbunClient) -> dict[str, Any]:
-    return client.post("/account/balance")
+    return client.post("/account/balance", idempotent=True)
 
 
 def check_availability_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/domain/checkDomain/{domain}")
+    return client.post(f"/domain/checkDomain/{domain}", idempotent=True)
 
 
 def check_bulk_availability_impl(client: PorkbunClient, domains: list[str]) -> dict[str, Any]:
@@ -41,7 +41,7 @@ def check_bulk_availability_impl(client: PorkbunClient, domains: list[str]) -> d
     results: dict[str, Any] = {}
     for d in domains:
         try:
-            results[d] = client.post(f"/domain/checkDomain/{d}")
+            results[d] = client.post(f"/domain/checkDomain/{d}", idempotent=True)
         except Exception as e:  # noqa: BLE001 — surface per-domain failures
             results[d] = {"status": "ERROR", "message": str(e)}
     return {"status": "SUCCESS", "results": results}
@@ -66,11 +66,11 @@ def list_supported_tlds_impl(
 
 
 def get_api_settings_impl(client: PorkbunClient) -> dict[str, Any]:
-    return client.post("/account/apiSettings")
+    return client.post("/account/apiSettings", idempotent=True)
 
 
 def get_ip_impl(client: PorkbunClient) -> dict[str, Any]:
-    return client.post("/ip")
+    return client.post("/ip", idempotent=True)
 
 
 def create_invite_impl(
@@ -88,7 +88,7 @@ def create_invite_impl(
 
 
 def get_invite_status_impl(client: PorkbunClient, token: str) -> dict[str, Any]:
-    return client.post("/account/inviteStatus", body={"token": token})
+    return client.post("/account/inviteStatus", body={"token": token}, idempotent=True)
 
 
 def set_email_password_impl(

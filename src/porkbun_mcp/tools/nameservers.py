@@ -9,7 +9,7 @@ from ..client import PorkbunClient
 
 
 def get_name_servers_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/domain/getNs/{domain}")
+    return client.post(f"/domain/getNs/{domain}", idempotent=True)
 
 
 def update_name_servers_impl(

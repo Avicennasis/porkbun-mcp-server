@@ -21,23 +21,23 @@ def list_domains_impl(
     body: dict[str, Any] = {"start": start}
     if include_labels:
         body["includeLabels"] = "yes"
-    return client.post("/domain/listAll", body=body)
+    return client.post("/domain/listAll", body=body, idempotent=True)
 
 
 def get_url_forwarding_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/domain/getUrlForwarding/{domain}")
+    return client.post(f"/domain/getUrlForwarding/{domain}", idempotent=True)
 
 
 def list_labels_impl(client: PorkbunClient) -> dict[str, Any]:
-    return client.post("/domain/labels/list")
+    return client.post("/domain/labels/list", idempotent=True)
 
 
 def get_domain_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/domain/get/{domain}")
+    return client.post(f"/domain/get/{domain}", idempotent=True)
 
 
 def get_glue_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/domain/getGlue/{domain}")
+    return client.post(f"/domain/getGlue/{domain}", idempotent=True)
 
 
 # ---------------------------------------------------------------------------
@@ -119,11 +119,11 @@ def transfer_domain_impl(
 
 
 def get_transfer_status_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/domain/getTransfer/{domain}")
+    return client.post(f"/domain/getTransfer/{domain}", idempotent=True)
 
 
 def list_transfers_impl(client: PorkbunClient) -> dict[str, Any]:
-    return client.post("/domain/listTransfers")
+    return client.post("/domain/listTransfers", idempotent=True)
 
 
 # ---------------------------------------------------------------------------

@@ -39,7 +39,13 @@ def _reset_audit_handler():
 def subprocess_spy(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     """Capture every subprocess invocation made by the audit module.
 
-    Sets the handler to an external binary so tests can assert on argv shape."""
+    Sets the handler to an external binary so tests can assert on argv shape.
+
+    Since B1-126 the real payload travels via stdin (``--payload -``); for
+    assertion convenience this spy splices the stdin JSON back into the
+    captured argv in place of the ``-`` sentinel, so tool tests keep
+    asserting on payload *content*. The stdin-vs-argv transport itself is
+    asserted in tests/test_audit.py."""
     from porkbun_mcp import audit
 
     audit._handler = None
@@ -48,7 +54,13 @@ def subprocess_spy(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     captured: list[list[str]] = []
 
     def fake_run(cmd, **kw):
-        captured.append(list(cmd))
+        argv = list(cmd)
+        stdin = kw.get("input")
+        if stdin is not None and "--payload" in argv:
+            sentinel_idx = argv.index("--payload") + 1
+            if argv[sentinel_idx] == "-":
+                argv[sentinel_idx] = stdin.decode()
+        captured.append(argv)
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
 
     monkeypatch.setattr(subprocess, "run", fake_run)

@@ -118,3 +118,93 @@ def test_client_raises_rate_limit_after_max_retries() -> None:
     )
     with pytest.raises(PorkbunRateLimit):
         client.post("/ping")
+
+
+# ---------------------------------------------------------------------------
+# B1-123 / B1-124 / B1-125 regression tests
+# ---------------------------------------------------------------------------
+
+
+def _client(transport: httpx.MockTransport, **kw) -> PorkbunClient:
+    return PorkbunClient(
+        "https://api.porkbun.com/api/json/v3",
+        "pk1_x",
+        "sk1_x",
+        transport=transport,
+        retry_base_seconds=0.0,
+        **kw,
+    )
+
+
+def test_client_wraps_network_errors_as_porkbun_error() -> None:
+    """B1-123: httpx exceptions must surface as PorkbunError subtypes."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("name resolution failed")
+
+    client = _client(httpx.MockTransport(handler))
+    with pytest.raises(PorkbunAPIError, match="Network error calling Porkbun"):
+        client.post("/ping")
+
+
+def test_client_retries_5xx_for_idempotent_calls() -> None:
+    """B1-124: transient 502s on idempotent reads are retried."""
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            return httpx.Response(502, text="Bad Gateway")
+        return _ok({"yourIp": "1.2.3.4"})
+
+    client = _client(httpx.MockTransport(handler), max_retries=3)
+    out = client.post("/ping", idempotent=True)
+    assert out["yourIp"] == "1.2.3.4"
+    assert calls["n"] == 3
+
+
+def test_client_does_not_retry_5xx_for_mutations() -> None:
+    """B1-124: mutations must NOT be retried on 5xx (double-apply risk)."""
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(502, text="Bad Gateway")
+
+    client = _client(httpx.MockTransport(handler), max_retries=3)
+    with pytest.raises(PorkbunAPIError):
+        client.post("/dns/create/example.com", body={"type": "A"})
+    assert calls["n"] == 1
+
+
+def test_client_5xx_exhaustion_surfaces_api_error() -> None:
+    """B1-124: a persistent 502 surfaces as PorkbunAPIError after retries."""
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(502, text="Bad Gateway")
+
+    client = _client(httpx.MockTransport(handler), max_retries=2)
+    with pytest.raises(PorkbunAPIError) as excinfo:
+        client.post("/ping", idempotent=True)
+    assert not isinstance(excinfo.value, PorkbunRateLimit)
+    assert excinfo.value.status_code == 502
+    assert calls["n"] == 2
+
+
+def test_client_rate_limit_carries_last_retry_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """B1-125: exhausted-retry PorkbunRateLimit forwards the last Retry-After."""
+    import time as _time
+
+    monkeypatch.setattr(_time, "sleep", lambda s: None)
+
+    transport = httpx.MockTransport(
+        lambda r: httpx.Response(429, headers={"Retry-After": "7.5"}, json={"status": "ERROR"})
+    )
+    client = _client(transport, max_retries=2)
+    with pytest.raises(PorkbunRateLimit) as excinfo:
+        client.post("/ping")
+    assert excinfo.value.retry_after_seconds == 7.5

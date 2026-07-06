@@ -64,8 +64,21 @@ class PorkbunClient:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
-    def post(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-        """POST to ``path`` with creds + ``body`` merged into the JSON payload."""
+    def post(
+        self,
+        path: str,
+        body: dict[str, Any] | None = None,
+        *,
+        idempotent: bool = False,
+    ) -> dict[str, Any]:
+        """POST to ``path`` with creds + ``body`` merged into the JSON payload.
+
+        ``idempotent=True`` marks read-style endpoints: transient upstream
+        errors (502/503/504) are retried with backoff for those calls only.
+        Mutations keep the default (no 5xx retry) so an operation that may
+        already have been applied behind a failing gateway is never
+        double-applied.
+        """
         payload: dict[str, Any] = {
             "apikey": self._api_key,
             "secretapikey": self._secret_key,
@@ -73,10 +86,21 @@ class PorkbunClient:
         if body:
             payload.update(body)
 
+        last_retry_after = 0.0
         for attempt in range(self._max_retries):
-            resp = self._http.post(path, json=payload)
+            try:
+                resp = self._http.post(path, json=payload)
+            except httpx.HTTPError as e:
+                # B1-123: network-level failures (ConnectError, ReadTimeout,
+                # ...) must surface as PorkbunError so the tool layer's
+                # `except PorkbunError` catches them.
+                raise PorkbunAPIError(
+                    message=f"Network error calling Porkbun ({e.__class__.__name__}): {e}",
+                    status_code=0,
+                ) from e
             if resp.status_code == 429:
                 retry_after = self._parse_retry_after(resp)
+                last_retry_after = retry_after
                 log.warning(
                     "porkbun 429; sleeping %.2fs (attempt %d/%d)",
                     retry_after,
@@ -85,12 +109,32 @@ class PorkbunClient:
                 )
                 time.sleep(max(retry_after, self._retry_base * (2**attempt)))
                 continue
+            if (
+                idempotent
+                and resp.status_code in (502, 503, 504)
+                and attempt < self._max_retries - 1
+            ):
+                # B1-124: transient upstream errors on idempotent reads get
+                # backoff retries; the final attempt falls through so the
+                # 5xx surfaces as a normal PorkbunAPIError.
+                delay = self._retry_base * (2**attempt)
+                log.warning(
+                    "porkbun %d on idempotent call; retrying in %.2fs (attempt %d/%d)",
+                    resp.status_code,
+                    delay,
+                    attempt + 1,
+                    self._max_retries,
+                )
+                time.sleep(delay)
+                continue
             return self._handle_response(resp)
 
         raise PorkbunRateLimit(
             message="Rate limit exceeded after retries",
             status_code=429,
-            retry_after_seconds=0.0,
+            # B1-125: surface the last known Retry-After instead of 0.0 so
+            # callers can schedule a sensible retry.
+            retry_after_seconds=last_retry_after,
         )
 
     @staticmethod

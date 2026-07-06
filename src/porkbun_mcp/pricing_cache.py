@@ -130,7 +130,7 @@ def get_pricing(
             if 0 <= age < cache_ttl_seconds(env=env):
                 return cached["payload"]
 
-    payload = client.post("/pricing/get")
+    payload = client.post("/pricing/get", idempotent=True)
     # client.post raises on ERROR responses, but stay defensive: never
     # persist a payload that isn't an explicit SUCCESS.
     if payload.get("status") == "SUCCESS":

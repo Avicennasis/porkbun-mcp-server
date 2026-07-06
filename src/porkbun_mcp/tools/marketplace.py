@@ -32,4 +32,4 @@ def get_marketplace_impl(
         body["sortName"] = sort_name
     if sort_direction is not None:
         body["sortDirection"] = sort_direction
-    return client.post("/marketplace/getAll", body=body)
+    return client.post("/marketplace/getAll", body=body, idempotent=True)

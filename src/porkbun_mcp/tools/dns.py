@@ -11,11 +11,11 @@ from ..client import PorkbunClient
 
 
 def list_dns_records_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/dns/retrieve/{domain}")
+    return client.post(f"/dns/retrieve/{domain}", idempotent=True)
 
 
 def get_dns_record_impl(client: PorkbunClient, domain: str, record_id: str) -> dict[str, Any]:
-    return client.post(f"/dns/retrieve/{domain}/{record_id}")
+    return client.post(f"/dns/retrieve/{domain}/{record_id}", idempotent=True)
 
 
 def get_dns_records_by_name_type_impl(
@@ -24,7 +24,7 @@ def get_dns_records_by_name_type_impl(
     path = f"/dns/retrieveByNameType/{domain}/{type}"
     if subdomain:
         path += f"/{subdomain}"
-    return client.post(path)
+    return client.post(path, idempotent=True)
 
 
 # ---------------------------------------------------------------------------

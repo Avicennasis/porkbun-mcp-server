@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Network errors surface as `PorkbunAPIError`.** httpx exceptions
+  (`ConnectError`, `ReadTimeout`, …) from the underlying transport are now
+  wrapped in `PorkbunAPIError(status_code=0)` instead of propagating raw
+  to the MCP framework (#47983).
+- **Transient 5xx retries for reads.** `PorkbunClient.post()` gained a
+  keyword-only `idempotent` flag; read-style endpoints (retrieve/get/list/
+  check/ping — 22 call sites) now retry 502/503/504 with exponential
+  backoff. Mutations are never retried on 5xx to avoid double-applying
+  behind a failing gateway (#47984).
+- **`PorkbunRateLimit.retry_after_seconds`** now carries the last known
+  `Retry-After` value after retry exhaustion instead of `0.0` (#47985).
+- **Audit failures are logged.** JSONL write errors, external emit-binary
+  launch failures, and non-zero emit-binary exits now `log.warning` on the
+  `porkbun_mcp.audit` logger instead of being silently swallowed; mutations
+  still never block on audit problems (#47987, #47988).
+
+### Security
+- **Audit payloads no longer visible in the process table.** The external
+  audit handler is invoked with `--payload -` and the JSON piped via
+  stdin, so payloads (e.g. TXT verification secrets) never appear in
+  `/proc/PID/cmdline`. The handler binary must support the `-` stdin
+  convention (`inkwell-emit` does as of its 2026-07-05 update) (#47986).
+
 ## [0.5.0] — 2026-06-10
 
 ### Added

@@ -13,7 +13,7 @@ from ..client import PorkbunClient
 
 
 def get_dnssec_records_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/dns/getDnssecRecords/{domain}")
+    return client.post(f"/dns/getDnssecRecords/{domain}", idempotent=True)
 
 
 def create_dnssec_record_impl(

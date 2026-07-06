@@ -8,4 +8,4 @@ from ..client import PorkbunClient
 
 
 def get_ssl_bundle_impl(client: PorkbunClient, domain: str) -> dict[str, Any]:
-    return client.post(f"/ssl/retrieve/{domain}")
+    return client.post(f"/ssl/retrieve/{domain}", idempotent=True)
