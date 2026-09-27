@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Async approval engine (`approval.py`), behind no tool yet.** A mutating call
+  can be *submitted* instead of executed: it becomes a `PENDING` record whose
+  effect is projected onto reads, so an unattended run is not blocked waiting on
+  a human. The projection is a pure replay of the journal, so denying an action
+  that never reached the provider costs nothing — drop the record, replay again.
+  Where the provider may already have committed, `mark_unknown()` keeps the
+  record and a reconciliation warning rather than leaving a clean journal that
+  reads as "never happened".
+  Pattern from Cloudflare OS's Gatekeepers, reimplemented without any
+  Cloudflare dependency (#50877). 11 offline tests.
+
 ### Changed
 - ruff is now **pinned** rather than floating. The lint job ran `pip install ruff`
   (unpinned), the `dev` extra said `ruff>=0.5.0`, and pre-commit pinned `v0.15.11`
