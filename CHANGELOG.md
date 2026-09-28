@@ -17,8 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Partyline already runs the homeserver, so nothing new is stood up. The
   action-id to event-id map is on disk so a poller restart does not orphan a
   request already sitting in the room (#50877).
-
-### Added
 - **Approval surface and poller (`approval_surface.py`), behind no tool yet.**
   The engine can hold a pending action and project its effect; this is how a
   human answer reaches it. The point is that **neither side blocks**: the agent
