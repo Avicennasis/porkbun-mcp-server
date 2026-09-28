@@ -29,18 +29,23 @@ log = logging.getLogger("porkbun_mcp.approval_poller")
 
 
 def handlers() -> dict[str, Handler]:
-    """kind -> (apply, revert).
+    """kind -> (apply, revert), for the kinds this server knows how to apply.
 
-    **Empty on purpose.** Each entry has to wrap a real provider call, and the
-    journal is general while the calls are not. Keeping this explicit means an
-    approved action of an unwired kind comes back as `no-handler` and stays
-    PENDING — visible and retryable — rather than being silently dropped or,
-    worse, reported as applied.
+    Every entry wraps a real provider call, and the journal is general while the
+    calls are not. An action of an unwired kind still comes back as
+    `no-handler` and stays PENDING — visible and retryable — rather than being
+    silently dropped or, worse, reported as applied.
 
-    Wire a kind by adding it here once the corresponding tool's `*_impl`
-    function is called through it.
+    DNS is wired (#50877). A client is built here because this is the entry
+    point; `build_handlers(client)` in `approval_handlers` is the testable form.
     """
-    return {}
+    from porkbun_mcp.approval_handlers import build_handlers
+    from porkbun_mcp.client import PorkbunClient
+    from porkbun_mcp.config import Config
+
+    cfg = Config.from_env()
+    cfg.require_credentials()
+    return build_handlers(PorkbunClient(cfg), audit_enabled=cfg.audit_enabled)
 
 
 def main(argv: list[str] | None = None) -> int:

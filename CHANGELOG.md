@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **The first real approval kinds: DNS records (`approval_handlers.py`).** The
+  journal could hold a pending action and a human could answer it; this is where
+  an approved one actually calls Porkbun. `dns.create` and `dns.delete`, wired
+  into the poller's `handlers()` (#50877).
+
+  The rule that makes `deny` honest: **a revert must run from the record
+  alone**, because the poller may resolve an approval hours later from a process
+  that restarted in between. So `dns.create`'s apply writes the new record id
+  back into the payload (which the journal persists), and `dns.delete`'s payload
+  has to carry the record's contents — an apply that would delete something it
+  cannot put back **refuses before the call**, rather than after.
+
+### Added
 - **Matrix approval surface + a runnable poller (`matrix_surface.py`,
   `approval_poller.py`) and its systemd unit.** The seam existed and was tested
   against files; this is the real transport. One message per action with the
