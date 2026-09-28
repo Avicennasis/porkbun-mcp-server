@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Matrix approval surface + a runnable poller (`matrix_surface.py`,
+  `approval_poller.py`) and its systemd unit.** The seam existed and was tested
+  against files; this is the real transport. One message per action with the
+  action id in the body, and **reactions as the answer** — ✅ approve, ❌ deny —
+  because a reaction is a closed set the poller cannot misread, where a reply
+  has to be parsed and can say anything.
+  Partyline already runs the homeserver, so nothing new is stood up. The
+  action-id to event-id map is on disk so a poller restart does not orphan a
+  request already sitting in the room (#50877).
 - **Approval surface and poller (`approval_surface.py`), behind no tool yet.**
   The engine can hold a pending action and project its effect; this is how a
   human answer reaches it. The point is that **neither side blocks**: the agent

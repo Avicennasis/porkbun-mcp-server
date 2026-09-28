@@ -1,0 +1,34 @@
+[Unit]
+Description=porkbun-mcp approval poller — apply or deny approved actions out of band
+Documentation=https://github.com/Avicennasis/porkbun-mcp-server
+# Needs the Matrix homeserver, which is on the mesh. The unit is written to run
+# on the box that holds the journal, so the workspace has to be up before it.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# The poller does the waiting so the agent does not have to. Restart=always
+# because a poller that stopped is a queue that silently stops draining -- the
+# one failure mode where "the process is gone" and "nobody has decided yet"
+# look identical from outside.
+ExecStart=%h/porkbun-mcp-server/.venv/bin/python -m porkbun_mcp.approval_poller
+WorkingDirectory=%h/porkbun-mcp-server
+
+Environment=APPROVAL_INTERVAL=5
+Environment=APPROVAL_LOG_LEVEL=INFO
+
+# Secrets come from the vault via the lookup script, so no EnvironmentFile with
+# credentials. Hardened in the usual way: the poller needs the network and its
+# own state, and nothing else.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/porkbun-mcp
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
