@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Approval surface and poller (`approval_surface.py`), behind no tool yet.**
+  The engine can hold a pending action and project its effect; this is how a
+  human answer reaches it. The point is that **neither side blocks**: the agent
+  submits and carries on, and a separate poller process posts the request and
+  applies or denies it later. The fleet's existing `matrix_await_approval`
+  blocks the session, which is exactly the limitation this removes.
+  The Matrix call sits behind an `ApprovalSurface` Protocol, so resolution is
+  testable offline and swapping the transport does not touch it (#50877).
+  12 offline tests.
+
+### Added
 - **Async approval engine (`approval.py`), behind no tool yet.** A mutating call
   can be *submitted* instead of executed: it becomes a `PENDING` record whose
   effect is projected onto reads, so an unattended run is not blocked waiting on
