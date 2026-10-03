@@ -1,4 +1,4 @@
-mcp>=2.2.0,<2.3.0
+mcp>=2.3.0,<2.4.0
 httpx>=0.28.1
 
 # Transitive security floors (OSV 2026-09-30):
