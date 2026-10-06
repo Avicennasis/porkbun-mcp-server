@@ -62,7 +62,7 @@ Or for other MCP clients, add to your configuration:
 
 Get your API keys at [porkbun.com/account/api](https://porkbun.com/account/api). Ensure API access is enabled for the domains you want to manage.
 
-## Tools (49)
+## Tools (48)
 
 ### DNS Records
 `list_dns_records` `create_dns_record` `bulk_create_dns_records` `get_dns_record` `get_dns_records_by_name_type` `edit_dns_record` `edit_dns_records_by_name_type` `delete_dns_record` `delete_dns_records_by_name_type`

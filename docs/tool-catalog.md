@@ -1,6 +1,6 @@
 # Tool Catalog
 
-49 tools across 7 modules. All mutation tools require a `reason` parameter
+48 tools across 7 modules. All mutation tools require a `reason` parameter
 and emit an audit row (configurable via `PORKBUN_MCP_AUDIT_HANDLER`).
 
 ## Account & Meta (13 tools)
@@ -21,12 +21,13 @@ and emit an audit row (configurable via `PORKBUN_MCP_AUDIT_HANDLER`).
 | `request_api_key` | Initiate API key authorization request | `name` |
 | `retrieve_api_key` | Poll for API key authorization approval | `request_token` |
 
-## Domain Inventory & Info (4 tools)
+## Domain Inventory & Info (5 tools)
 
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
 | `list_domains` | List all domains in the account (paginated, 1000/page) | `start`, `include_labels` |
 | `get_domain` | Detailed domain info — expiry, auto-renew, lock state | `domain` |
+| `get_glue` | List glue records (host A/AAAA at registrar); empty list if none | `domain` |
 | `list_labels` | List all domain labels (Porkbun's tagging system) | — |
 | `get_url_forwarding` | List URL-forwarding rules for a domain | `domain` |
 

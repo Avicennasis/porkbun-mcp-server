@@ -1,7 +1,13 @@
-"""FastMCP entrypoint for porkbun-mcp.
+"""MCP server entrypoint for porkbun-mcp (mcp SDK 2.x ``MCPServer``).
+
+mcp 2 renamed FastMCP to ``mcp.server.mcpserver.MCPServer`` and removed the
+``mcp.server.fastmcp`` module; importing it raises ModuleNotFoundError, which is
+how 0.6.0 shipped unable to start. tests/test_server_import.py and
+tests/test_stdio_entrypoint.py import and spawn this module so that cannot
+recur silently.
 
 Note: this module deliberately does NOT use ``from __future__ import
-annotations``. FastMCP's @mcp.tool() decorator runs ``issubclass`` against
+annotations``. The @mcp.tool() decorator runs ``issubclass`` against
 parameter annotations to detect Context params; under PEP 563 every
 annotation becomes a string and that raises TypeError. Same constraint
 documented in redmine-mcp/src/redmine_mcp/server.py.
@@ -10,8 +16,9 @@ documented in redmine-mcp/src/redmine_mcp/server.py.
 import logging
 import sys
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
+from . import __version__
 from .client import PorkbunClient
 from .config import Config
 from .errors import PorkbunError
@@ -19,7 +26,7 @@ from .tools import account, dns, dnssec, domains, marketplace, nameservers, ssl
 
 log = logging.getLogger("porkbun_mcp")
 
-mcp = FastMCP(
+mcp = MCPServer(
     "porkbun",
     instructions=(
         "Porkbun MCP server. Full coverage of API v3: domains, DNS records, "
@@ -30,6 +37,7 @@ mcp = FastMCP(
         "(source='porkbun-mcp', category='dns' for DNS/DNSSEC/NS, "
         "category='domain' for glue/forwarding/labels/registration/renewal/transfers)."
     ),
+    version=__version__,
 )
 
 _config: Config | None = None

@@ -7,13 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.0] — 2026-09-29
+## [0.6.1] — 2026-10-06
+
+### Fixed
+- **The server starts again.** 0.6.0 (and `main` since the mcp v2 bump in #37,
+  2026-09-15) could not start: `server.py` imported `mcp.server.fastmcp`, which
+  mcp 2 removed, while `pyproject.toml` required `mcp>=2.2`. Every launch died
+  with `ModuleNotFoundError` before the handshake. Ported to mcp 2's
+  `mcp.server.mcpserver.MCPServer` (the server now also reports its version in
+  `serverInfo`). CI stayed green throughout because no test imported
+  `server.py`; two new tests close that gap:
+  - `tests/test_server_import.py` imports the module, checks every registered
+    tool against `docs/tool-catalog.md`, that every tool taking `reason`
+    requires it, and that `__version__` matches `pyproject.toml`.
+  - `tests/test_stdio_entrypoint.py` spawns the installed `porkbun-mcp` console
+    script and completes an MCP `initialize` + `tools/list` over stdio,
+    offline and without credentials.
+- `__version__` said `0.4.0.dev0`; it now matches the package version.
+- Tool counts: the README and tool catalog said 49; the server registers 48.
+  `get_glue` was missing from `docs/tool-catalog.md`.
 
 ### Added
 - **The first real approval kinds: DNS records (`approval_handlers.py`).** The
   journal could hold a pending action and a human could answer it; this is where
   an approved one actually calls Porkbun. `dns.create` and `dns.delete`, wired
-  into the poller's `handlers()` (#50877).
+  into the poller's `handlers()` (#50877). (Merged in #47 after the 0.6.0
+  release commit, so it is not in the 0.6.0 wheel; this entry previously sat
+  under 0.6.0.)
 
   The rule that makes `deny` honest: **a revert must run from the record
   alone**, because the poller may resolve an approval hours later from a process
@@ -21,6 +41,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   back into the payload (which the journal persists), and `dns.delete`'s payload
   has to carry the record's contents — an apply that would delete something it
   cannot put back **refuses before the call**, rather than after.
+
+### Changed
+- Python 3.14 added to the CI test matrix and the classifiers.
+- `.pre-commit-config.yaml` ruff rev v0.16.0 → v0.16.10, back in step with the
+  `ruff==0.16.10` dev pin (#50 bumped only the pin).
+- Dependencies: `mcp>=2.3.0,<2.4.0` (#51); ruff 0.16.10 (#50); GitHub Actions
+  pins (#49); transitive security floors in `requirements.txt` for
+  httpx2/httpcore2/python-multipart (#48).
+
+## [0.6.0] — 2026-09-29
 
 ### Added
 - **Matrix approval surface + a runnable poller (`matrix_surface.py`,
