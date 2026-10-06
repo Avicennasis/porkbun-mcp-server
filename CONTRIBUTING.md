@@ -19,7 +19,7 @@ pre-commit install
 pytest
 ```
 
-CI runs the tests against Python 3.11, 3.12, 3.13 — make sure they pass locally
+CI runs the tests against Python 3.11, 3.12, 3.13, 3.14 — make sure they pass locally
 before opening a PR.
 
 ## Code style

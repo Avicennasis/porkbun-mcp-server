@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "porkbun-mcp-server"
-version = "0.6.0"
+version = "0.6.1"
 description = "Model Context Protocol server for Porkbun's API v3 — domains, DNS, DNSSEC, SSL with audit-log emit on every mutation."
 readme = "README.md"
 license = { text = "MIT" }
@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Internet :: Name Service (DNS)",
 ]
 dependencies = [
